@@ -3,7 +3,7 @@ name: Update JSON and README After Merge
 on:
   push:
     branches:
-      - "main"  # 请确保这里是你当前测试用的主分支名 (如 main 或 index)
+      - "test2me"  # 请确保这里是你当前测试用的主分支名 (如 main 或 index)
     paths:
       - "plugins.json"
 
