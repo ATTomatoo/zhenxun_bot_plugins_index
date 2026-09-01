@@ -3,7 +3,7 @@ name: Update JSON and README After Merge
 on:
   push:
     branches:
-      - "index"
+      - "test2me"
     paths:
       - "plugins.json"
 
