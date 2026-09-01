@@ -37,7 +37,7 @@ jobs:
               if p.get("github_url") and not p.get("ali_url"):
                   github_url = p["github_url"]
                   repo_name = github_url.split('/tree/')[0].split('/blob/')[0].rstrip('/').split('/')[-1].replace('.git', '')
-                  p["ali_url"] = f"https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/{repo_name}"
+                  p["ali_url"] = f"https://codeup.aliyun.com/69624f9a58acb3fac7aed520/ATTomatoo/{repo_name}"
                   updated = True
                   print(f"✅ Added ali_url for: {repo_name}")
 
