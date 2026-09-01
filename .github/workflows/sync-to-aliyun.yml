@@ -1,7 +1,7 @@
 name: Force Sync to Aliyun
 on:
   push:
-    branches: ["index"]
+    branches: ["test2me"]
 jobs:
   sync:
     runs-on: ubuntu-latest
