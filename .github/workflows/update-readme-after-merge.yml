@@ -3,7 +3,7 @@ name: Update README after PR merge
 on:
   push:
     branches:
-      - "index"
+      - "test2me"
     paths:
       - "plugins.json"
       - ".pr-need-readme-update"
