@@ -72,7 +72,7 @@ jobs:
             --changed-plugins '${{ steps.changed-plugins.outputs.changed_plugins }}' \
             --org-id '69624f9a58acb3fac7aed520' \
             --access-token '${{ secrets.ALIYUN_PERSONAL_ACCESS_TOKEN }}' \
-            --namespace-id 7410740 \
+            --namespace-id 2084823 \
             --namespace-path 'zhenxun_plugins' \
             --visibility 'internal'
 
