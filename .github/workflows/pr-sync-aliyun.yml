@@ -70,9 +70,9 @@ jobs:
         run: |
           python scripts/sync.py \
             --changed-plugins '${{ steps.changed-plugins.outputs.changed_plugins }}' \
-            --org-id '67a361cf556e6cdab537117a' \
+            --org-id '69624f9a58acb3fac7aed520' \
             --access-token '${{ secrets.ALIYUN_PERSONAL_ACCESS_TOKEN }}' \
-            --namespace-id 1638483 \
+            --namespace-id 7410740 \
             --namespace-path 'zhenxun_plugins' \
             --visibility 'internal'
 
