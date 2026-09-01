@@ -9,8 +9,7 @@
     "version": "0.9",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/xuanerwa/zhenxun_github_sub",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_github_sub"
+    "github_url": "https://github.com/xuanerwa/zhenxun_github_sub"
   },
   {
     "name": "Minecraft查服",
@@ -22,8 +21,7 @@
     "version": "2.2",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/molanp/zhenxun_plugin_mccheck",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_mccheck"
+    "github_url": "https://github.com/molanp/zhenxun_plugin_mccheck"
   },
   {
     "name": "明日方舟干员收集",
@@ -61,8 +59,7 @@
     "version": "1.0",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/PackageInstaller/zhenxun_plugin_draw_painting/tree/master",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_draw_painting"
+    "github_url": "https://github.com/PackageInstaller/zhenxun_plugin_draw_painting/tree/master"
   },
   {
     "name": "AI全家桶",
@@ -71,11 +68,10 @@
     "description": "AI全家桶，一次安装，到处使用，省时省力省心",
     "usage": "AI全家桶，一次安装，到处使用，省时省力省心\nusage:\n    生成图片 (可选size) <prompt>\n    生成视频 (可选基于生成内容图片) <prompt>\n    清理我的会话:   用于清理你与AI的聊天记录\n    清理群会话: (仅管理员)用于清理本群的大杂烩记录，仅当分组模式为group时生效\n    启用/禁用伪人模式:  开启或关闭当前群聊的伪人模式\n或者与机器人聊天，小真寻是可以看懂大家的表情包和链接的...\n例如；\n    @Bot 抱抱\n    小真寻老婆",
     "author": "molanp",
-    "version": "4.7",
+    "version": "4.3",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/molanp/zhenxun_plugin_zhipu_toolkit",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_zhipu_toolkit"
+    "github_url": "https://github.com/molanp/zhenxun_plugin_zhipu_toolkit"
   },
   {
     "name": "牛牛大作战",
@@ -87,8 +83,7 @@
     "version": "1.2.rc3",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/molanp/zhenxun_plugin_niuniu",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_niuniu"
+    "github_url": "https://github.com/molanp/zhenxun_plugin_niuniu"
   },
   {
     "name": "真寻农场",
@@ -100,8 +95,7 @@
     "version": "1.0",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/Shu-Ying/zhenxun_plugin_farm",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_farm"
+    "github_url": "https://github.com/Shu-Ying/zhenxun_plugin_farm"
   },
   {
     "name": "群聊总结",
@@ -152,8 +146,7 @@
     "version": "1.0",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/s12mmm3/zhenxun_plugin_coffee",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_coffee"
+    "github_url": "https://github.com/s12mmm3/zhenxun_plugin_coffee"
   },
   {
     "name": "上不上",
@@ -165,8 +158,7 @@
     "version": "1.8",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/molanp/zhenxun_plugin_fuckornot",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_fuckornot"
+    "github_url": "https://github.com/molanp/zhenxun_plugin_fuckornot"
   },
   {
     "name": "Nonebot插件商店",
@@ -204,8 +196,7 @@
     "version": "1.0",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/iAJue/zhenxun_plugin_pai",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_pai"
+    "github_url": "https://github.com/iAJue/zhenxun_plugin_pai"
   },
   {
     "name": "禁言小助手",
@@ -217,8 +208,7 @@
     "version": "1.1",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/iAJue/zhenxun_plugin_lottery",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_lottery"
+    "github_url": "https://github.com/iAJue/zhenxun_plugin_lottery"
   },
   {
     "name": "24点",
@@ -230,8 +220,7 @@
     "version": "0.2",
     "plugin_type": "NORMAL",
     "is_dir": false,
-    "github_url": "https://github.com/molanp/zhenxun_plugin_twenty_four",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_twenty_four"
+    "github_url": "https://github.com/molanp/zhenxun_plugin_twenty_four"
   },
   {
     "name": "AI创作",
@@ -256,8 +245,7 @@
     "version": "3.0",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/Evan8440/zhenxun_plugin_casino_21",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_casino_21"
+    "github_url": "https://github.com/Evan8440/zhenxun_plugin_casino_21"
   },
   {
     "name": "21点青春版",
@@ -269,8 +257,7 @@
     "version": "2.0",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/molanp/zhenxun_plugin_21_points_youth",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_21_points_youth"
+    "github_url": "https://github.com/molanp/zhenxun_plugin_21_points_youth"
   },
   {
     "name": "加群申请处理插件",
@@ -282,8 +269,7 @@
     "version": "0.5.0",
     "plugin_type": "ADMIN",
     "is_dir": true,
-    "github_url": "https://github.com/BingZi-233/zhenxun_plugin_group_request_handler",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_group_request_handler"
+    "github_url": "https://github.com/BingZi-233/zhenxun_plugin_group_request_handler"
   },
   {
     "name": "链接白名单",
@@ -295,8 +281,7 @@
     "version": "0.1",
     "plugin_type": "ADMIN",
     "is_dir": true,
-    "github_url": "https://github.com/BingZi-233/zhenxun_plugin_link_police",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_link_police"
+    "github_url": "https://github.com/BingZi-233/zhenxun_plugin_link_police"
   },
   {
     "name": "祈福签",
@@ -308,8 +293,7 @@
     "version": "0.2",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/YingLing3/zhenxun_plugin_skyblessings",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_skyblessings"
+    "github_url": "https://github.com/YingLing3/zhenxun_plugin_skyblessings"
   },
   {
     "name": "三角洲查询",
@@ -347,8 +331,7 @@
     "version": "0.3",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/Riordon666/naruto",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/naruto"
+    "github_url": "https://github.com/Riordon666/naruto"
   },
   {
     "name": "洛克王国世界孵蛋查询",
@@ -360,8 +343,7 @@
     "version": "1.0",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/OatmeaILL/zhenxun_roco_egg_query",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_roco_egg_query"
+    "github_url": "https://github.com/OatmeaILL/zhenxun_roco_egg_query"
   },
   {
     "name": "天气查询",
@@ -373,8 +355,7 @@
     "version": "0.7.0",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/aikun-China/nonebot_plugin_weather",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/nonebot_plugin_weather"
+    "github_url": "https://github.com/aikun-China/nonebot_plugin_weather"
   },
   {
     "name": "进群验证",
@@ -386,8 +367,7 @@
     "version": "1.2",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/Hychan2333/zhenxun_join_verify",
-    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_join_verify"
+    "github_url": "https://github.com/Hychan2333/zhenxun_join_verify"
   },
   {
     "name": "链接分享解析 Lite 版",
