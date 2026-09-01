@@ -1,23 +1,24 @@
 name: Update JSON and README After Merge
 
 on:
-  push:
-    branches:
-      - "test2me"  # 请确保这里是你当前测试用的主分支名 (如 main 或 index)
-    paths:
-      - "plugins.json"
+  workflow_run:
+    workflows: ["plugin publish"] # 关键修改：监听官方 zhenxunflow 所在的工作流
+    types:
+      - completed
 
 permissions:
   contents: write
 
 jobs:
   auto-update:
+    # 只有官方 publish 成功了，我们才接着跑
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2  # 关键修改：必须拉取至少 2 个历史提交，以便能够对比 HEAD^1
+          fetch-depth: 10 # 关键修改：必须拉取足够的历史提交，以便跨越 zhenxunflow 的覆盖提交去对比旧版本
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,22 +31,23 @@ jobs:
           import json
           import subprocess
           
-          # 1. 加载当前合并后的最新 plugins.json
+          # 1. 读取当前最新（已经被 zhenxunflow 覆写过）的 plugins.json
           with open("plugins.json", "r", encoding="utf-8") as f:
               current_plugins = json.load(f)
 
-          # 2. 通过 Git 命令读取合并前（HEAD^1）的 plugins.json
+          # 2. 读取合并前历史版本的 plugins.json
+          # 使用 HEAD~2 是因为中间包含了 "Merge PR" 和 "zhenxunflow 自动提交" 两次变动
           try:
-              old_json_str = subprocess.check_output(["git", "show", "HEAD^1:plugins.json"]).decode("utf-8")
+              old_json_str = subprocess.check_output(["git", "show", "HEAD~2:plugins.json"]).decode("utf-8")
               old_plugins = json.loads(old_json_str)
           except Exception as e:
-              print(f"⚠️ 无法读取上一个版本，可能是初次提交: {e}")
+              print(f"⚠️ 无法读取历史版本 (可能是首次提交): {e}")
               old_plugins = []
 
           old_map = {p.get("github_url"): p for p in old_plugins if p.get("github_url")}
           updated = False
 
-          # 3. 遍历当前插件，找出本次用户提交的插件
+          # 3. 遍历比对，精准狙击本次更新的插件
           for p in current_plugins:
               github_url = p.get("github_url")
               if not github_url:
@@ -53,18 +55,17 @@ jobs:
                   
               old_p = old_map.get(github_url)
               
-              # 判断核心：只抓取本次“新增的”或“修改了版本号/名字的”插件
+              # 核心逻辑：只给“当前用户新增的”或“版本号变动的”插件加链接，历史老插件一律跳过
               is_just_updated = (not old_p) or (p.get("version") != old_p.get("version")) or (p.get("name") != old_p.get("name"))
 
-              # 只有当它是本次更新的插件，且没有 ali_url 时，才补全
               if is_just_updated and not p.get("ali_url"):
                   repo_name = github_url.split('/tree/')[0].split('/blob/')[0].rstrip('/').split('/')[-1].replace('.git', '')
-                  # 请确保这里的组织 ID 和路径是你自己的
+                  # 请核对你的组织 ID 是否正确
                   p["ali_url"] = f"https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/{repo_name}"
                   updated = True
-                  print(f"✅ 检测到本次修改的插件，已生成 ali_url: {p.get('name', repo_name)}")
+                  print(f"✅ 捕获到本次更新的插件: {p.get('name', repo_name)}，已添加 ali_url")
 
-          # 4. 如果有更新，保存文件
+          # 4. 保存文件
           if updated:
               with open("plugins.json", "w", encoding="utf-8") as f:
                   json.dump(current_plugins, f, ensure_ascii=False, indent=2)
@@ -81,9 +82,6 @@ jobs:
           git config --local user.name "github-actions[bot]"
           
           git add plugins.json README.md
-          
-          git rm -f .pr-need-readme-update 2>/dev/null || true
-          git rm -f readme_update_instructions.txt 2>/dev/null || true
           
           if git diff --staged --quiet; then
             echo "✅ 没有发现变动，跳过提交。"
