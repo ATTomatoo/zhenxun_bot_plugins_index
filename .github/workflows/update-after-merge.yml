@@ -60,7 +60,7 @@ jobs:
               if is_just_updated and not p.get("ali_url"):
                   repo_name = github_url.split('/tree/')[0].split('/blob/')[0].rstrip('/').split('/')[-1].replace('.git', '')
                   # 请确保这里的组织 ID 和路径是你自己的
-                  p["ali_url"] = f"https://codeup.aliyun.com/69624f9a58acb3fac7aed520/ATTomatoo/{repo_name}"
+                  p["ali_url"] = f"https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/{repo_name}"
                   updated = True
                   print(f"✅ 检测到本次修改的插件，已生成 ali_url: {p.get('name', repo_name)}")
 
