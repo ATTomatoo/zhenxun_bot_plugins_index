@@ -94,7 +94,7 @@ jobs:
             
             git config --global http.postBuffer 524288000
             git config --global core.compression 0
-            aliyun_url="https://${{ secrets.ALIYUN_ACCOUNT }}:${{ secrets.ALIYUN_PASSWORD }}@codeup.aliyun.com/69624f9a58acb3fac7aed520/ATTomatoo/${repo_name}.git"
+            aliyun_url="https://${{ secrets.ALIYUN_ACCOUNT }}:${{ secrets.ALIYUN_PASSWORD }}@codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/${repo_name}.git"
             git remote add aliyun "$aliyun_url"
             git push --force aliyun HEAD:main
             
