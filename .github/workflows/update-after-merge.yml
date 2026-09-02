@@ -80,15 +80,12 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          git add plugins.json README.md
-          
-          git rm -f .pr-need-readme-update 2>/dev/null || true
-          git rm -f readme_update_instructions.txt 2>/dev/null || true
+          git add plugins.json
           
           if git diff --staged --quiet; then
             echo "✅ 没有发现变动，跳过提交。"
           else
-            git commit -m "chore: 自动补全 ali_url 并更新 README [skip ci]"
+            git commit -m "chore: 自动补全 ali_url [skip ci]"
             git push
             echo "✅ 成功更新并推送。"
           fi
