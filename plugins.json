@@ -149,7 +149,7 @@
     "description": "上不上AI评分系统",
     "usage": "    上传图片，让AI来评判它的可操性\n上 [图片]\n        上 @user\n        [回复]上\n\n    -----人格列表，可以使用序号或名称指定人格-----\n    |1 | 欲望化身\n    |2 | 霸道总裁\n    |3 | 耽美鉴赏家\n    |4 | 恋物诗人\n    |5 | 纯欲神官\n    |6 | 百合诗人\n\n    例如:\n        上 -s 1 [图片]\n        上 -s 霸道总裁 [图片]",
     "author": "molanp",
-    "version": "1.8",
+    "version": "1.9",
     "plugin_type": "NORMAL",
     "is_dir": true,
     "github_url": "https://github.com/molanp/zhenxun_plugin_fuckornot"
@@ -187,7 +187,7 @@
     "description": "拍他一次 / 拍他五次",
     "usage": "指令：\n      - 拍他 @某人 （戳一下）\n      - 拍死他 @某人（戳五次）",
     "author": "iAJue",
-    "version": "1.0",
+    "version": "1.1",
     "plugin_type": "NORMAL",
     "is_dir": true,
     "github_url": "https://github.com/iAJue/zhenxun_plugin_pai"
@@ -199,7 +199,7 @@
     "description": "参与抽奖的群员会被随机禁言一段时间, 我看看谁这么贱",
     "usage": "指令：\n      - 抽奖                 (直接参与抽奖并被随机禁言)",
     "author": "iAJue",
-    "version": "1.1",
+    "version": "1.2",
     "plugin_type": "NORMAL",
     "is_dir": true,
     "github_url": "https://github.com/iAJue/zhenxun_plugin_lottery"
@@ -211,7 +211,7 @@
     "description": "24 点小游戏",
     "usage": "开启游戏命令: 开始24点\n    结束游戏命令: 结束24点\n\n    你的回答直接发就行",
     "author": "molanp",
-    "version": "0.2",
+    "version": "0.3",
     "plugin_type": "NORMAL",
     "is_dir": false,
     "github_url": "https://github.com/molanp/zhenxun_plugin_twenty_four"
