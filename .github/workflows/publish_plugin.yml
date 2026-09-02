@@ -195,6 +195,9 @@ jobs:
     runs-on: ubuntu-latest
     name: zhenxunflow
     needs: [plugin_test, ensure_plugin_label]
+    if: |
+      github.event_name == 'issues' &&
+      (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'edited')
     permissions:
       contents: write
       pull-requests: write
