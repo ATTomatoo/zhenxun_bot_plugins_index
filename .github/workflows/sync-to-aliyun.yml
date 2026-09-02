@@ -4,6 +4,7 @@ on:
     branches: ["test2me"]
 jobs:
   sync:
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
