@@ -72,7 +72,8 @@
     "version": "4.9",
     "plugin_type": "NORMAL",
     "is_dir": true,
-    "github_url": "https://github.com/molanp/zhenxun_plugin_zhipu_toolkit"
+    "github_url": "https://github.com/molanp/zhenxun_plugin_zhipu_toolkit",
+    "ali_url": "https://codeup.aliyun.com/69624f9a58acb3fac7aed520/zhenxun_plugins/zhenxun_plugin_zhipu_toolkit"
   },
   {
     "name": "牛牛大作战",
