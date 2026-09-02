@@ -1,17 +1,20 @@
 name: Force Sync to Aliyun
+
 on:
-  push:
-    branches: ["test2me"]
+  workflow_run:
+    workflows: ["Update JSON and README After Merge"]
+    types: [completed]
 
 jobs:
   sync:
-    if: ${{ github.ref == 'refs/heads/test2me' && contains(github.event.head_commit.message, '自动补全 ali_url') && contains(github.event.head_commit.message, '[skip ci]') }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'test2me' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
 
       - name: Configure Git
