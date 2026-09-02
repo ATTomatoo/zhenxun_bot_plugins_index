@@ -182,7 +182,7 @@ jobs:
         with:
           config: >
             {
-              "base": "index",
+              "base": "test2me",
               "plugin_path": "plugins.json"
             }
         env:

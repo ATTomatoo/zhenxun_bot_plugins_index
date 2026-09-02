@@ -3,15 +3,20 @@ name: Update JSON and README After Merge
 on:
   push:
     branches:
-      - "test2me"  # 请确保这里是你当前测试用的主分支名 (如 main 或 index)
+      - "test2me"
     paths:
       - "plugins.json"
+
+concurrency:
+  group: auto-fill-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
 
 jobs:
   auto-update:
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '自动补全 ali_url') && !contains(github.event.head_commit.message, '自动更新 README.md 中的插件列表表格') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
