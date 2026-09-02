@@ -76,6 +76,39 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
 
+  ensure_plugin_label:
+    runs-on: ubuntu-latest
+    name: ensure plugin label
+    needs: check
+    if: |
+      github.event_name == 'issues' ||
+      github.event_name == 'issue_comment'
+    permissions:
+      issues: write
+    steps:
+      - name: Generate token
+        id: generate-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_KEY }}
+
+      - name: Ensure Plugin label exists and attach it
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          set -e
+          if ! gh label list --repo "${{ github.repository }}" --limit 200 | awk '{print $1}' | grep -qx "Plugin"; then
+            gh label create "Plugin" \
+              --repo "${{ github.repository }}" \
+              --color "0366d6" \
+              --description "Plugin publication request" \
+              --force
+          fi
+          gh issue edit "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --add-label "Plugin"
+
   plugin_test:
     runs-on: ubuntu-latest
     name: zhenxun plugin test
@@ -161,7 +194,7 @@ jobs:
   zhenxunflow:
     runs-on: ubuntu-latest
     name: zhenxunflow
-    needs: plugin_test
+    needs: [plugin_test, ensure_plugin_label]
     permissions:
       contents: write
       pull-requests: write
