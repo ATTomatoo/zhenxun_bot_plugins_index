@@ -5,7 +5,7 @@ on:
 
 jobs:
   sync:
-    if: ${{ github.ref == 'refs/heads/test2me' && !contains(github.event.head_commit.message, '自动更新 README.md 中的插件列表表格') }}
+    if: ${{ github.ref == 'refs/heads/test2me' && contains(github.event.head_commit.message, '自动补全 ali_url') && contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
