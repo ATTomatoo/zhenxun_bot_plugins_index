@@ -11,7 +11,7 @@ on:
     types: [submitted]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.issue.number || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
   cancel-in-progress: false
 
 permissions:
@@ -113,6 +113,9 @@ jobs:
     runs-on: ubuntu-latest
     name: zhenxun plugin test
     needs: check
+    if: |
+      github.event_name == 'issues' ||
+      github.event_name == 'issue_comment'
     permissions:
       issues: read
     outputs:
@@ -132,13 +135,11 @@ jobs:
       # 1. 先 Clone 真寻，确保目录下有 pyproject.toml
       - name: Setup zhenxun
         id: setup-zhenxun
-        if: ${{ !startsWith(github.event_name, 'pull_request') }}
         run: |
           git clone --depth 1 -b main https://github.com/zhenxun-org/zhenxun_bot.git
 
       # 2. 此时有了真寻目录，再安装 uv 并配置缓存路径
       - name: Install uv
-        if: ${{ !startsWith(github.event_name, 'pull_request') }}
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
@@ -153,8 +154,8 @@ jobs:
 
       - name: Test Plugin
         id: plugin-test
-        if: ${{ !startsWith(github.event_name, 'pull_request') }}
         run: |
+          set -o pipefail
           cd zhenxun_bot
           
           # 清理旧插件和 lock
@@ -176,28 +177,26 @@ jobs:
           print("fastapi:", fastapi.__version__)
           PY
           
-          curl -sSL https://github.com/zhenxun-org/zhenxunflow/releases/latest/download/plugin_test.py | uv run python -
-
-      - name: Test Plugin PR
-        id: plugin-test-pr
-        if: ${{ startsWith(github.event_name, 'pull_request') }}
-        run: |
-          pip install --upgrade "pydantic>=2" fastapi
-          python - <<'PY'
-          import pydantic
-          import fastapi
-          print("pydantic:", pydantic.__version__)
-          print("fastapi:", fastapi.__version__)
-          PY
-          curl -sSL https://github.com/zhenxun-org/zhenxunflow/releases/latest/download/plugin_test.py | python -
+          curl --fail --silent --show-error --location \
+            https://github.com/zhenxun-org/zhenxunflow/releases/latest/download/plugin_test.py \
+            | uv run python -
   
   zhenxunflow:
     runs-on: ubuntu-latest
     name: zhenxunflow
-    needs: [plugin_test, ensure_plugin_label]
+    needs: [check, plugin_test, ensure_plugin_label]
     if: |
-      github.event_name == 'issues' &&
-      (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'edited')
+      always() &&
+      needs.check.result == 'success' &&
+      (
+        (
+          (github.event_name == 'issues' || github.event_name == 'issue_comment') &&
+          needs.plugin_test.result == 'success' &&
+          needs.ensure_plugin_label.result == 'success'
+        ) ||
+        github.event_name == 'pull_request_review' ||
+        github.event_name == 'pull_request_target'
+      )
     permissions:
       contents: write
       pull-requests: write
