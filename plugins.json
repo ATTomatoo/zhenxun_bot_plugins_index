@@ -148,7 +148,7 @@
     "description": "来一杯热气腾腾的咖啡吧~",
     "usage": "\n    【基础命令】\n    来杯咖啡：发送一条随机组合的咖啡推荐\n    ",
     "author": "overwriter",
-    "version": "1.0",
+    "version": "1.1",
     "plugin_type": "NORMAL",
     "is_dir": true,
     "github_url": "https://github.com/s12mmm3/zhenxun_plugin_coffee"
