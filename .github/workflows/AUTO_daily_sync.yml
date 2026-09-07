@@ -14,11 +14,11 @@ permissions:
   contents: write
 
 env:
-  TARGET_BRANCH: index
-  ALIYUN_ORG_ID: "67a361cf556e6cdab537117a"
-  ALIYUN_NAMESPACE_ID: "1638483"
+  TARGET_BRANCH: test2me
+  ALIYUN_ORG_ID: "69624f9a58acb3fac7aed520"
+  ALIYUN_NAMESPACE_ID: "2084823"
   ALIYUN_NAMESPACE_PATH: zhenxun_plugins
-  ALIYUN_INDEX_PATH: zhenxun-org/zhenxun_bot_plugins_index
+  ALIYUN_INDEX_PATH: ATTomatoo/zhenxun_bot_plugins_index
 
 jobs:
   update-plugins:
@@ -40,7 +40,7 @@ jobs:
       - name: Checkout index branch
         uses: actions/checkout@v4
         with:
-          ref: index
+          ref: ${{ env.TARGET_BRANCH }}
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 

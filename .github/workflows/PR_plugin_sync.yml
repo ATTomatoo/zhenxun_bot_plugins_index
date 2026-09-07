@@ -3,7 +3,7 @@ name: PR - Verify and sync plugin
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, labeled, closed]
-    branches: ["index"]
+    branches: ["test2me"]
     paths: ["plugins.json"]
   pull_request_review:
     types: [submitted]
@@ -18,10 +18,10 @@ permissions:
   pull-requests: write
 
 env:
-  ALIYUN_ORG_ID: "67a361cf556e6cdab537117a"
-  ALIYUN_NAMESPACE_ID: "1638483"
+  ALIYUN_ORG_ID: "69624f9a58acb3fac7aed520"
+  ALIYUN_NAMESPACE_ID: "2084823"
   ALIYUN_NAMESPACE_PATH: zhenxun_plugins
-  ALIYUN_INDEX_PATH: zhenxun-org/zhenxun_bot_plugins_index
+  ALIYUN_INDEX_PATH: ATTomatoo/zhenxun_bot_plugins_index
 
 jobs:
   authorize:
@@ -33,7 +33,7 @@ jobs:
         github.event.action != 'closed'
       ) || (
         github.event_name == 'pull_request_review' &&
-        github.event.pull_request.base.ref == 'index' &&
+        github.event.pull_request.base.ref == 'test2me' &&
         contains(github.event.pull_request.labels.*.name, 'Plugin')
       )
     steps:
@@ -176,7 +176,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'pull_request_review' &&
-      github.event.pull_request.base.ref == 'index' &&
+      github.event.pull_request.base.ref == 'test2me' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       contains(github.event.pull_request.labels.*.name, 'Plugin') &&
       needs.sync-pr.result == 'success' &&
@@ -199,7 +199,7 @@ jobs:
         with:
           config: >
             {
-              "base": "index",
+              "base": "test2me",
               "plugin_path": "plugins.json"
             }
         env:
@@ -232,7 +232,7 @@ jobs:
         with:
           config: >
             {
-              "base": "index",
+              "base": "test2me",
               "plugin_path": "plugins.json"
             }
         env:

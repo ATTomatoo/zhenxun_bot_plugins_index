@@ -152,6 +152,7 @@ jobs:
       - name: Checkout index repository
         uses: actions/checkout@v4
         with:
+          ref: test2me
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Cache pre-commit hooks
@@ -165,7 +166,7 @@ jobs:
         with:
           config: >
             {
-              "base": "index",
+              "base": "test2me",
               "plugin_path": "plugins.json"
             }
         env:
