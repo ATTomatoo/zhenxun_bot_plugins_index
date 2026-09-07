@@ -11,9 +11,7 @@ from aliyun_sync import (
     PluginMirror,
     SyncError,
     SyncSkipped,
-    configured_skip_reason,
     load_json,
-    parse_github_source,
     write_json,
 )
 
@@ -77,12 +75,6 @@ def main() -> int:
     synchronized = 0
     for plugin in plugins_to_sync:
         name = str(plugin.get("name") or plugin.get("github_url") or "unknown")
-        source = parse_github_source(plugin)
-        skip_reason = configured_skip_reason(source)
-        if skip_reason:
-            skipped.append(f"{name}: {skip_reason}")
-            print(f"Skipped {name}: {skip_reason}")
-            continue
         try:
             result = mirror.sync(plugin)
         except SyncSkipped as error:

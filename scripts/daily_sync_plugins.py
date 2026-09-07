@@ -10,7 +10,6 @@ from aliyun_sync import (
     PluginMirror,
     SyncError,
     SyncSkipped,
-    configured_skip_reason,
     load_json,
     official_ali_url,
     parse_github_source,
@@ -73,13 +72,6 @@ def main() -> int:
             source = parse_github_source(plugin)
             previous_commit = str(commits.get(source.tracking_key, ""))
             latest_commit = resolve_remote_commit(source)
-            skip_reason = configured_skip_reason(source)
-            if skip_reason:
-                next_commits[source.tracking_key] = latest_commit
-                skipped.append(f"{name}: {skip_reason}")
-                print(f"Skipped {name}: {skip_reason}")
-                continue
-
             expected_ali_url = official_ali_url(
                 args.org_id, args.namespace_path, source.repository_name
             )

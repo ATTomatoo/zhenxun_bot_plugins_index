@@ -40,14 +40,6 @@ class SyncResult:
     version_source: str
 
 
-# This repository is known to store its image library in Git LFS. Codeup does
-# not receive GitHub's LFS objects during an ordinary Git push, so attempting to
-# mirror it creates an incomplete repository and makes every scheduled run fail.
-KNOWN_GIT_LFS_SOURCES = {
-    "https://github.com/PackageInstaller/zhenxun_plugin_draw_painting@master",
-}
-
-
 def load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as file:
         return json.load(file)
@@ -95,12 +87,6 @@ def parse_github_source(plugin: dict[str, Any]) -> GitHubSource:
 
 def official_ali_url(org_id: str, namespace_path: str, repository_name: str) -> str:
     return f"https://codeup.aliyun.com/{org_id}/{namespace_path}/{repository_name}"
-
-
-def configured_skip_reason(source: GitHubSource) -> str | None:
-    if source.tracking_key in KNOWN_GIT_LFS_SOURCES:
-        return "Git LFS repository excluded from Aliyun synchronization"
-    return None
 
 
 def _mask(text: str, secrets: Iterable[str]) -> str:
@@ -437,10 +423,6 @@ class PluginMirror:
         repair_invalid_ali_url: bool = False,
     ) -> SyncResult:
         source = parse_github_source(plugin)
-        skip_reason = configured_skip_reason(source)
-        if skip_reason:
-            raise SyncSkipped(f"{source.repository_name}: {skip_reason}")
-
         expected_ali_url = official_ali_url(
             self.org_id, self.namespace_path, source.repository_name
         )

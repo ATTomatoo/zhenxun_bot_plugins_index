@@ -159,19 +159,14 @@ class PullRequestDiffTests(unittest.TestCase):
 
 
 class DailySynchronizationTests(unittest.TestCase):
-    def test_known_lfs_plugin_is_tracked_but_not_mirrored(self) -> None:
-        full_commit = "89fdc6034384077d9e7f6ca73920c93dd04e1541"
-        tracking_key = (
-            "https://github.com/PackageInstaller/"
-            "zhenxun_plugin_draw_painting@master"
-        )
+    def test_lfs_plugin_resumes_sync_after_lfs_is_removed(self) -> None:
+        lfs_commit = "1111111111111111111111111111111111111111"
+        normal_commit = "2222222222222222222222222222222222222222"
+        tracking_key = "https://github.com/example/lfs-plugin@main"
         plugin = {
-            "name": "游戏立绘抽卡",
+            "name": "LFS plugin",
             "version": "1.1",
-            "github_url": (
-                "https://github.com/PackageInstaller/"
-                "zhenxun_plugin_draw_painting/tree/master"
-            ),
+            "github_url": "https://github.com/example/lfs-plugin/tree/main",
         }
 
         with tempfile.TemporaryDirectory() as temporary:
@@ -183,6 +178,16 @@ class DailySynchronizationTests(unittest.TestCase):
             )
             commits_path.write_text("{}", encoding="utf-8")
             fake_mirror = Mock()
+            fake_mirror.sync.side_effect = [
+                SyncSkipped("Git LFS repository"),
+                SyncResult(
+                    ali_url="https://codeup.aliyun.com/org/plugins/lfs-plugin",
+                    commit=normal_commit,
+                    repository_name="lfs-plugin",
+                    version="2.0",
+                    version_source="pyproject.project",
+                ),
+            ]
             arguments = [
                 "daily_sync_plugins.py",
                 "--plugins",
@@ -210,20 +215,34 @@ class DailySynchronizationTests(unittest.TestCase):
                 patch.object(
                     daily_sync_plugins,
                     "resolve_remote_commit",
-                    return_value=full_commit,
+                    side_effect=[lfs_commit, normal_commit],
                 ),
                 patch.dict(os.environ, {}, clear=False),
             ):
                 os.environ.pop("GITHUB_OUTPUT", None)
-                result = daily_sync_plugins.main()
+                first_result = daily_sync_plugins.main()
+                first_plugins = json.loads(
+                    plugins_path.read_text(encoding="utf-8")
+                )
+                first_commits = json.loads(
+                    commits_path.read_text(encoding="utf-8")
+                )
+                second_result = daily_sync_plugins.main()
 
             plugins = json.loads(plugins_path.read_text(encoding="utf-8"))
             commits = json.loads(commits_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(result, 0)
-        self.assertEqual(plugins, [plugin])
-        self.assertEqual(commits[tracking_key], full_commit)
-        fake_mirror.sync.assert_not_called()
+        self.assertEqual(first_result, 0)
+        self.assertEqual(first_plugins, [plugin])
+        self.assertEqual(first_commits[tracking_key], lfs_commit)
+        self.assertEqual(second_result, 0)
+        self.assertEqual(
+            plugins[0]["ali_url"],
+            "https://codeup.aliyun.com/org/plugins/lfs-plugin",
+        )
+        self.assertEqual(plugins[0]["version"], "2.0")
+        self.assertEqual(commits[tracking_key], normal_commit)
+        self.assertEqual(fake_mirror.sync.call_count, 2)
 
     def test_updates_version_and_full_commit_after_successful_mirror(self) -> None:
         full_commit = "abcdef1234567890abcdef1234567890abcdef12"
