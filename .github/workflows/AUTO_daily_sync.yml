@@ -6,7 +6,7 @@ on:
     # - cron: "0 16 * * *"
     # GitHub Actions supports a minimum interval of five minutes. Start at
     # minute 2 to avoid the busiest minute boundaries (02, 07, 12, ..., 57).
-    - cron: "*/5 * * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 concurrency:
