@@ -44,7 +44,7 @@ jobs:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_KEY }}
 
-      - name: Require Plugin label or authorize deletion-only PR
+      - name: Require Plugin label or authorize safe manifest change
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.app-token.outputs.token }}
@@ -95,6 +95,11 @@ jobs:
               return value;
             };
             const fingerprint = plugin => JSON.stringify(normalize(plugin));
+            const withoutVersion = plugin => {
+              const copy = { ...plugin };
+              delete copy.version;
+              return copy;
+            };
 
             const basePlugins = await readPlugins(
               pullRequest.base.repo.full_name,
@@ -117,17 +122,66 @@ jobs:
             const removed = basePlugins.filter(
               plugin => plugin.github_url && !headByUrl.has(plugin.github_url)
             );
-            const hasAddedOrModified = headPlugins.some(plugin => {
-              if (!plugin.github_url) {
-                return false;
-              }
+            const added = headPlugins.filter(
+              plugin => plugin.github_url && !baseByUrl.has(plugin.github_url)
+            );
+            const versionUpdates = headPlugins.filter(plugin => {
               const previous = baseByUrl.get(plugin.github_url);
-              return !previous || fingerprint(previous) !== fingerprint(plugin);
+              return (
+                previous &&
+                fingerprint(withoutVersion(previous)) ===
+                  fingerprint(withoutVersion(plugin)) &&
+                previous.version !== plugin.version &&
+                String(plugin.version || "").trim() !== ""
+              );
             });
+            const hasUnsafeModification = headPlugins.some(plugin => {
+              const previous = baseByUrl.get(plugin.github_url);
+              return (
+                !plugin.github_url ||
+                (previous &&
+                  fingerprint(withoutVersion(previous)) !==
+                    fingerprint(withoutVersion(plugin))) ||
+                (previous &&
+                  previous.version !== plugin.version &&
+                  !String(plugin.version || "").trim())
+              );
+            });
+            const baseUrls = basePlugins
+              .filter(plugin => plugin.github_url)
+              .map(plugin => plugin.github_url);
+            const headUrls = headPlugins
+              .filter(plugin => plugin.github_url)
+              .map(plugin => plugin.github_url);
+            const hasInvalidIdentity =
+              baseUrls.length !== basePlugins.length ||
+              headUrls.length !== headPlugins.length ||
+              new Set(baseUrls).size !== baseUrls.length ||
+              new Set(headUrls).size !== headUrls.length;
+            const changedFiles = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pullRequest.number,
+                per_page: 100,
+              }
+            );
+            const unsafeFiles = changedFiles.filter(
+              file => !["plugins.json", "README.md"].includes(file.filename)
+            );
+            const hasSafeChange =
+              removed.length > 0 || versionUpdates.length > 0;
 
-            if (removed.length === 0 || hasAddedOrModified) {
+            if (
+              !hasSafeChange ||
+              added.length > 0 ||
+              hasUnsafeModification ||
+              hasInvalidIdentity ||
+              unsafeFiles.length > 0
+            ) {
               core.setFailed(
-                "The Plugin label is required. It is added automatically only for deletion-only PRs."
+                "The Plugin label is required. Automatic labeling is limited to deletions and version-only updates of existing plugins, with no unrelated files."
               );
               return;
             }
@@ -153,10 +207,17 @@ jobs:
               issue_number: pullRequest.number,
               labels: ["Plugin"],
             });
+            const authorizedChanges = [
+              ...removed.map(
+                plugin => `delete ${plugin.name || plugin.github_url}`
+              ),
+              ...versionUpdates.map(plugin => {
+                const previous = baseByUrl.get(plugin.github_url);
+                return `version ${plugin.name || plugin.github_url}: ${previous.version} -> ${plugin.version}`;
+              }),
+            ];
             core.notice(
-              `Deletion-only PR detected; added Plugin label for: ${removed
-                .map(plugin => plugin.name || plugin.github_url)
-                .join(", ")}`
+              `Safe plugin manifest change detected; added Plugin label for: ${authorizedChanges.join(", ")}`
             );
 
   sync-pr:
