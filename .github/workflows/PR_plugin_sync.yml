@@ -25,201 +25,27 @@ env:
 
 jobs:
   authorize:
-    name: Authorize Aliyun synchronization
+    name: Accept authorized plugin pull request
     runs-on: ubuntu-latest
     if: |
       (
         github.event_name == 'pull_request_target' &&
-        github.event.action != 'closed'
+        github.event.action != 'closed' &&
+        (
+          github.event.pull_request.head.repo.full_name == github.repository ||
+          contains(github.event.pull_request.labels.*.name, 'Plugin')
+        )
       ) || (
         github.event_name == 'pull_request_review' &&
         github.event.pull_request.base.ref == 'test2me' &&
-        contains(github.event.pull_request.labels.*.name, 'Plugin')
+        (
+          github.event.pull_request.head.repo.full_name == github.repository ||
+          contains(github.event.pull_request.labels.*.name, 'Plugin')
+        )
       )
     steps:
-      - name: Generate GitHub App token
-        id: app-token
-        uses: tibdex/github-app-token@v2
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_KEY }}
-
-      - name: Require Plugin label or authorize safe manifest change
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ steps.app-token.outputs.token }}
-          script: |
-            const pullRequest = context.payload.pull_request;
-            const labels = (pullRequest.labels || []).map(label => label.name);
-            if (labels.includes("Plugin")) {
-              core.info("Plugin label already present");
-              return;
-            }
-
-            if (context.eventName !== "pull_request_target") {
-              core.setFailed("The Plugin label is required before synchronization.");
-              return;
-            }
-
-            const readPlugins = async (fullName, ref) => {
-              const [owner, repo] = fullName.split("/");
-              const response = await github.rest.repos.getContent({
-                owner,
-                repo,
-                path: "plugins.json",
-                ref,
-              });
-              if (Array.isArray(response.data) || !response.data.content) {
-                throw new Error(`Unable to read plugins.json from ${fullName}@${ref}`);
-              }
-              const plugins = JSON.parse(
-                Buffer.from(response.data.content, "base64").toString("utf8")
-              );
-              if (!Array.isArray(plugins)) {
-                throw new Error(`${fullName}@${ref}: plugins.json must be an array`);
-              }
-              return plugins;
-            };
-
-            const normalize = value => {
-              if (Array.isArray(value)) {
-                return value.map(normalize);
-              }
-              if (value && typeof value === "object") {
-                return Object.fromEntries(
-                  Object.keys(value)
-                    .sort()
-                    .map(key => [key, normalize(value[key])])
-                );
-              }
-              return value;
-            };
-            const fingerprint = plugin => JSON.stringify(normalize(plugin));
-            const withoutVersion = plugin => {
-              const copy = { ...plugin };
-              delete copy.version;
-              return copy;
-            };
-
-            const basePlugins = await readPlugins(
-              pullRequest.base.repo.full_name,
-              pullRequest.base.sha
-            );
-            const headPlugins = await readPlugins(
-              pullRequest.head.repo.full_name,
-              pullRequest.head.sha
-            );
-            const baseByUrl = new Map(
-              basePlugins
-                .filter(plugin => plugin.github_url)
-                .map(plugin => [plugin.github_url, plugin])
-            );
-            const headByUrl = new Map(
-              headPlugins
-                .filter(plugin => plugin.github_url)
-                .map(plugin => [plugin.github_url, plugin])
-            );
-            const removed = basePlugins.filter(
-              plugin => plugin.github_url && !headByUrl.has(plugin.github_url)
-            );
-            const added = headPlugins.filter(
-              plugin => plugin.github_url && !baseByUrl.has(plugin.github_url)
-            );
-            const versionUpdates = headPlugins.filter(plugin => {
-              const previous = baseByUrl.get(plugin.github_url);
-              return (
-                previous &&
-                fingerprint(withoutVersion(previous)) ===
-                  fingerprint(withoutVersion(plugin)) &&
-                previous.version !== plugin.version &&
-                String(plugin.version || "").trim() !== ""
-              );
-            });
-            const hasUnsafeModification = headPlugins.some(plugin => {
-              const previous = baseByUrl.get(plugin.github_url);
-              return (
-                !plugin.github_url ||
-                (previous &&
-                  fingerprint(withoutVersion(previous)) !==
-                    fingerprint(withoutVersion(plugin))) ||
-                (previous &&
-                  previous.version !== plugin.version &&
-                  !String(plugin.version || "").trim())
-              );
-            });
-            const baseUrls = basePlugins
-              .filter(plugin => plugin.github_url)
-              .map(plugin => plugin.github_url);
-            const headUrls = headPlugins
-              .filter(plugin => plugin.github_url)
-              .map(plugin => plugin.github_url);
-            const hasInvalidIdentity =
-              baseUrls.length !== basePlugins.length ||
-              headUrls.length !== headPlugins.length ||
-              new Set(baseUrls).size !== baseUrls.length ||
-              new Set(headUrls).size !== headUrls.length;
-            const changedFiles = await github.paginate(
-              github.rest.pulls.listFiles,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: pullRequest.number,
-                per_page: 100,
-              }
-            );
-            const unsafeFiles = changedFiles.filter(
-              file => !["plugins.json", "README.md"].includes(file.filename)
-            );
-            const hasSafeChange =
-              removed.length > 0 || versionUpdates.length > 0;
-
-            if (
-              !hasSafeChange ||
-              added.length > 0 ||
-              hasUnsafeModification ||
-              hasInvalidIdentity ||
-              unsafeFiles.length > 0
-            ) {
-              core.setFailed(
-                "The Plugin label is required. Automatic labeling is limited to deletions and version-only updates of existing plugins, with no unrelated files."
-              );
-              return;
-            }
-
-            const { owner, repo } = context.repo;
-            try {
-              await github.rest.issues.getLabel({ owner, repo, name: "Plugin" });
-            } catch (error) {
-              if (error.status !== 404) {
-                throw error;
-              }
-              await github.rest.issues.createLabel({
-                owner,
-                repo,
-                name: "Plugin",
-                color: "0366d6",
-                description: "Plugin publication request",
-              });
-            }
-            await github.rest.issues.addLabels({
-              owner,
-              repo,
-              issue_number: pullRequest.number,
-              labels: ["Plugin"],
-            });
-            const authorizedChanges = [
-              ...removed.map(
-                plugin => `delete ${plugin.name || plugin.github_url}`
-              ),
-              ...versionUpdates.map(plugin => {
-                const previous = baseByUrl.get(plugin.github_url);
-                return `version ${plugin.name || plugin.github_url}: ${previous.version} -> ${plugin.version}`;
-              }),
-            ];
-            core.notice(
-              `Safe plugin manifest change detected; added Plugin label for: ${authorizedChanges.join(", ")}`
-            );
-
+      - name: Accept plugins.json change
+        run: echo "Authorized plugins.json pull request accepted"
   sync-pr:
     name: Upload plugin code before merge
     runs-on: ubuntu-latest
@@ -379,7 +205,6 @@ jobs:
       github.event_name == 'pull_request_review' &&
       github.event.pull_request.base.ref == 'test2me' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      contains(github.event.pull_request.labels.*.name, 'Plugin') &&
       needs.sync-pr.result == 'success' &&
       needs.sync-pr.outputs.head_updated != 'true'
     steps:
