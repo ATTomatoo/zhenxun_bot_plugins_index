@@ -33,7 +33,7 @@ class PullRequestDiffTests(unittest.TestCase):
 
         self.assertEqual(result, [new_b, new_c])
 
-    def test_ignores_deleted_plugins(self) -> None:
+    def test_does_not_upload_deleted_plugins(self) -> None:
         deleted = {"name": "A", "github_url": "https://github.com/o/a"}
         self.assertEqual(changed_plugins([deleted], []), [])
 
