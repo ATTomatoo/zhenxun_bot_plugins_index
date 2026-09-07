@@ -229,19 +229,43 @@ jobs:
         working-directory: pr
         env:
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           echo "head_updated=false" >> "$GITHUB_OUTPUT"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+
+          git fetch --no-tags origin \
+            "+refs/heads/$HEAD_REF:refs/remotes/origin/pr-current"
+          remote_head=$(git rev-parse refs/remotes/origin/pr-current)
+          if [ "$remote_head" != "$EVENT_HEAD_SHA" ]; then
+            echo "PR branch advanced from $EVENT_HEAD_SHA to $remote_head; skip stale run"
+            echo "head_updated=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           git add plugins.json README.md
           if git diff --staged --quiet; then
             echo "No generated pull request changes"
             exit 0
           fi
           git commit -m "chore: verify Aliyun mirror and update plugin index"
-          git push origin "HEAD:refs/heads/$HEAD_REF"
-          echo "head_updated=true" >> "$GITHUB_OUTPUT"
+          if git push origin "HEAD:refs/heads/$HEAD_REF"; then
+            echo "head_updated=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git fetch --no-tags origin \
+            "+refs/heads/$HEAD_REF:refs/remotes/origin/pr-current"
+          remote_head=$(git rev-parse refs/remotes/origin/pr-current)
+          if [ "$remote_head" != "$EVENT_HEAD_SHA" ]; then
+            echo "PR branch changed during push; a newer workflow run will handle it"
+            echo "head_updated=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Push failed although the PR branch did not advance"
+          exit 1
 
       - name: Upload generated manifest for fork PR
         if: |
