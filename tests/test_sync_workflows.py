@@ -14,7 +14,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 import daily_sync_plugins  # noqa: E402
 import sync_pr_plugins  # noqa: E402
-from aliyun_sync import SyncError, SyncResult  # noqa: E402
+from aliyun_sync import SyncError, SyncResult, SyncSkipped  # noqa: E402
 from sync_pr_plugins import changed_plugins  # noqa: E402
 
 
@@ -108,6 +108,33 @@ class PullRequestDiffTests(unittest.TestCase):
 
         self.assertEqual(unchanged, original)
 
+    def test_lfs_plugin_is_skipped_without_failing_pull_request(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            base_path = root / "base.json"
+            head_path = root / "head.json"
+            plugin = {
+                "name": "LFS plugin",
+                "github_url": "https://github.com/example/lfs-plugin",
+            }
+            base_path.write_text("[]", encoding="utf-8")
+            head_path.write_text(json.dumps([plugin]), encoding="utf-8")
+            fake_mirror = Mock()
+            fake_mirror.sync.side_effect = SyncSkipped("Git LFS repository")
+
+            with (
+                patch.object(sys, "argv", self._pr_arguments(base_path, head_path)),
+                patch.object(sync_pr_plugins, "PluginMirror", return_value=fake_mirror),
+                patch.dict(os.environ, {}, clear=False),
+            ):
+                os.environ.pop("GITHUB_OUTPUT", None)
+                result = sync_pr_plugins.main()
+
+            unchanged = json.loads(head_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(result, 0)
+        self.assertEqual(unchanged, [plugin])
+
     @staticmethod
     def _pr_arguments(base_path: Path, head_path: Path) -> list[str]:
         return [
@@ -132,6 +159,72 @@ class PullRequestDiffTests(unittest.TestCase):
 
 
 class DailySynchronizationTests(unittest.TestCase):
+    def test_known_lfs_plugin_is_tracked_but_not_mirrored(self) -> None:
+        full_commit = "89fdc6034384077d9e7f6ca73920c93dd04e1541"
+        tracking_key = (
+            "https://github.com/PackageInstaller/"
+            "zhenxun_plugin_draw_painting@master"
+        )
+        plugin = {
+            "name": "游戏立绘抽卡",
+            "version": "1.1",
+            "github_url": (
+                "https://github.com/PackageInstaller/"
+                "zhenxun_plugin_draw_painting/tree/master"
+            ),
+        }
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            plugins_path = root / "plugins.json"
+            commits_path = root / "plugin_commits.json"
+            plugins_path.write_text(
+                json.dumps([plugin], ensure_ascii=False), encoding="utf-8"
+            )
+            commits_path.write_text("{}", encoding="utf-8")
+            fake_mirror = Mock()
+            arguments = [
+                "daily_sync_plugins.py",
+                "--plugins",
+                str(plugins_path),
+                "--commits",
+                str(commits_path),
+                "--org-id",
+                "org",
+                "--namespace-id",
+                "1",
+                "--namespace-path",
+                "plugins",
+                "--access-token",
+                "token",
+                "--account",
+                "account",
+                "--password",
+                "password",
+            ]
+            with (
+                patch.object(sys, "argv", arguments),
+                patch.object(
+                    daily_sync_plugins, "PluginMirror", return_value=fake_mirror
+                ),
+                patch.object(
+                    daily_sync_plugins,
+                    "resolve_remote_commit",
+                    return_value=full_commit,
+                ),
+                patch.dict(os.environ, {}, clear=False),
+            ):
+                os.environ.pop("GITHUB_OUTPUT", None)
+                result = daily_sync_plugins.main()
+
+            plugins = json.loads(plugins_path.read_text(encoding="utf-8"))
+            commits = json.loads(commits_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(result, 0)
+        self.assertEqual(plugins, [plugin])
+        self.assertEqual(commits[tracking_key], full_commit)
+        fake_mirror.sync.assert_not_called()
+
     def test_updates_version_and_full_commit_after_successful_mirror(self) -> None:
         full_commit = "abcdef1234567890abcdef1234567890abcdef12"
         with tempfile.TemporaryDirectory() as temporary:

@@ -15,9 +15,11 @@ from aliyun_sync import (  # noqa: E402
     GitHubSource,
     PluginMirror,
     SyncError,
+    SyncSkipped,
     extract_version,
     official_ali_url,
     parse_github_source,
+    repository_uses_git_lfs,
 )
 
 
@@ -91,7 +93,59 @@ class VersionExtractionTests(unittest.TestCase):
         self.assertEqual(source, "commit")
 
 
+class GitLfsDetectionTests(unittest.TestCase):
+    def test_detects_lfs_filter_in_committed_attributes(self) -> None:
+        with patch(
+            "aliyun_sync._run",
+            side_effect=[
+                "README.md\0assets/.gitattributes\0",
+                "*.png filter=lfs diff=lfs merge=lfs -text\n",
+            ],
+        ):
+            self.assertTrue(repository_uses_git_lfs(Path("repository")))
+
+    def test_ignores_commented_lfs_filter(self) -> None:
+        with patch(
+            "aliyun_sync._run",
+            side_effect=[
+                ".gitattributes\0",
+                "# *.png filter=lfs diff=lfs merge=lfs -text\n*.txt text\n",
+            ],
+        ):
+            self.assertFalse(repository_uses_git_lfs(Path("repository")))
+
+
 class MirrorVerificationTests(unittest.TestCase):
+    def test_skips_lfs_repository_before_creating_aliyun_repository(self) -> None:
+        mirror = PluginMirror(
+            org_id="org",
+            namespace_id=1,
+            namespace_path="plugins",
+            access_token="token",
+            account="account",
+            password="password",
+        )
+        mirror.client.ensure_repository = Mock()
+        source = GitHubSource(
+            clone_url="https://github.com/example/lfs-plugin.git",
+            repository_name="lfs-plugin",
+            branch="main",
+        )
+        with (
+            patch("aliyun_sync.parse_github_source", return_value=source),
+            patch("aliyun_sync._run", side_effect=["", "a" * 40]),
+            patch("aliyun_sync.repository_uses_git_lfs", return_value=True),
+        ):
+            with self.assertRaises(SyncSkipped):
+                mirror.sync(
+                    {
+                        "name": "LFS plugin",
+                        "github_url": "https://github.com/example/lfs-plugin",
+                    }
+                )
+
+        mirror.client.ensure_repository.assert_not_called()
+
     def test_pushes_and_verifies_exact_source_commit(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -7,7 +7,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from aliyun_sync import PluginMirror, SyncError, load_json, write_json
+from aliyun_sync import (
+    PluginMirror,
+    SyncError,
+    SyncSkipped,
+    configured_skip_reason,
+    load_json,
+    parse_github_source,
+    write_json,
+)
 
 
 def changed_plugins(
@@ -64,9 +72,24 @@ def main() -> int:
     )
 
     generated: list[dict[str, str]] = []
+    skipped: list[str] = []
     pending_updates: list[tuple[dict[str, Any], str]] = []
+    synchronized = 0
     for plugin in plugins_to_sync:
-        result = mirror.sync(plugin)
+        name = str(plugin.get("name") or plugin.get("github_url") or "unknown")
+        source = parse_github_source(plugin)
+        skip_reason = configured_skip_reason(source)
+        if skip_reason:
+            skipped.append(f"{name}: {skip_reason}")
+            print(f"Skipped {name}: {skip_reason}")
+            continue
+        try:
+            result = mirror.sync(plugin)
+        except SyncSkipped as error:
+            skipped.append(f"{name}: {error}")
+            print(f"Skipped {name}: {error}")
+            continue
+        synchronized += 1
         current_ali_url = str(plugin.get("ali_url", "")).strip().rstrip("/")
         if not current_ali_url:
             pending_updates.append((plugin, result.ali_url))
@@ -85,12 +108,20 @@ def main() -> int:
         write_json(args.head, head_plugins)
 
     write_output("changed_count", str(len(plugins_to_sync)))
+    write_output("synchronized_count", str(synchronized))
+    write_output("skipped_count", str(len(skipped)))
     write_output("metadata_updated", str(metadata_updated).lower())
     write_output(
         "generated_urls",
         json.dumps(generated, ensure_ascii=False, separators=(",", ":")),
     )
-    print(f"Synchronized {len(plugins_to_sync)} changed plugin(s)")
+    write_output(
+        "skipped", json.dumps(skipped, ensure_ascii=False, separators=(",", ":"))
+    )
+    print(
+        f"Synchronized {synchronized} changed plugin(s); "
+        f"skipped {len(skipped)} plugin(s)"
+    )
     return 0
 
 

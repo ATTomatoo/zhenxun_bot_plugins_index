@@ -9,6 +9,8 @@ from pathlib import Path
 from aliyun_sync import (
     PluginMirror,
     SyncError,
+    SyncSkipped,
+    configured_skip_reason,
     load_json,
     official_ali_url,
     parse_github_source,
@@ -61,6 +63,7 @@ def main() -> int:
 
     next_commits: dict[str, str] = {}
     failures: list[str] = []
+    skipped: list[str] = []
     synchronized = 0
     metadata_updated = False
 
@@ -70,6 +73,13 @@ def main() -> int:
             source = parse_github_source(plugin)
             previous_commit = str(commits.get(source.tracking_key, ""))
             latest_commit = resolve_remote_commit(source)
+            skip_reason = configured_skip_reason(source)
+            if skip_reason:
+                next_commits[source.tracking_key] = latest_commit
+                skipped.append(f"{name}: {skip_reason}")
+                print(f"Skipped {name}: {skip_reason}")
+                continue
+
             expected_ali_url = official_ali_url(
                 args.org_id, args.namespace_path, source.repository_name
             )
@@ -102,6 +112,10 @@ def main() -> int:
                 f"Updated {name}: version={result.version} "
                 f"source={result.version_source} commit={result.commit[:12]}"
             )
+        except SyncSkipped as error:
+            skipped.append(f"{name}: {error}")
+            next_commits[source.tracking_key] = latest_commit
+            print(f"Skipped {name}: {error}")
         except (OSError, ValueError, SyncError) as error:
             failures.append(f"{name}: {error}")
             try:
@@ -119,11 +133,18 @@ def main() -> int:
 
     write_output("synchronized_count", str(synchronized))
     write_output("failed_count", str(len(failures)))
+    write_output("skipped_count", str(len(skipped)))
     write_output("has_failures", str(bool(failures)).lower())
     write_output(
         "failures", json.dumps(failures, ensure_ascii=False, separators=(",", ":"))
     )
-    print(f"Daily synchronization updated {synchronized} plugin(s)")
+    write_output(
+        "skipped", json.dumps(skipped, ensure_ascii=False, separators=(",", ":"))
+    )
+    print(
+        f"Daily synchronization updated {synchronized} plugin(s); "
+        f"skipped {len(skipped)} plugin(s)"
+    )
     return 1 if failures else 0
 
 

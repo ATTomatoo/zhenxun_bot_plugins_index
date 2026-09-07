@@ -8,12 +8,16 @@ import subprocess
 import tempfile
 import urllib.parse
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
 class SyncError(RuntimeError):
     """Raised when a GitHub repository cannot be mirrored safely."""
+
+
+class SyncSkipped(RuntimeError):
+    """Raised when a repository is intentionally excluded from mirroring."""
 
 
 @dataclass(frozen=True)
@@ -34,6 +38,14 @@ class SyncResult:
     repository_name: str
     version: str
     version_source: str
+
+
+# This repository is known to store its image library in Git LFS. Codeup does
+# not receive GitHub's LFS objects during an ordinary Git push, so attempting to
+# mirror it creates an incomplete repository and makes every scheduled run fail.
+KNOWN_GIT_LFS_SOURCES = {
+    "https://github.com/PackageInstaller/zhenxun_plugin_draw_painting@master",
+}
 
 
 def load_json(path: Path) -> Any:
@@ -85,6 +97,12 @@ def official_ali_url(org_id: str, namespace_path: str, repository_name: str) -> 
     return f"https://codeup.aliyun.com/{org_id}/{namespace_path}/{repository_name}"
 
 
+def configured_skip_reason(source: GitHubSource) -> str | None:
+    if source.tracking_key in KNOWN_GIT_LFS_SOURCES:
+        return "Git LFS repository excluded from Aliyun synchronization"
+    return None
+
+
 def _mask(text: str, secrets: Iterable[str]) -> str:
     for secret in secrets:
         if secret:
@@ -127,6 +145,29 @@ def resolve_remote_commit(source: GitHubSource) -> str:
         target = source.branch or "HEAD"
         raise SyncError(f"Unable to resolve {target} for {source.clone_url}")
     return output.split()[0]
+
+
+def repository_uses_git_lfs(repository: Path) -> bool:
+    """Return whether committed attributes configure any Git LFS filter."""
+
+    tracked_paths = _run(
+        ["git", "ls-tree", "-r", "--name-only", "-z", "HEAD"],
+        cwd=repository,
+    ).split("\0")
+    for relative_path in tracked_paths:
+        if not relative_path or PurePosixPath(relative_path).name != ".gitattributes":
+            continue
+        attributes = _run(
+            ["git", "show", f"HEAD:{relative_path}"],
+            cwd=repository,
+        )
+        for raw_line in attributes.splitlines():
+            line = raw_line.strip()
+            if line and not line.startswith("#") and re.search(
+                r"(?:^|\s)filter\s*=\s*lfs(?:\s|$)", line
+            ):
+                return True
+    return False
 
 
 def _literal_version(node: ast.AST | None) -> str | None:
@@ -396,19 +437,14 @@ class PluginMirror:
         repair_invalid_ali_url: bool = False,
     ) -> SyncResult:
         source = parse_github_source(plugin)
+        skip_reason = configured_skip_reason(source)
+        if skip_reason:
+            raise SyncSkipped(f"{source.repository_name}: {skip_reason}")
+
         expected_ali_url = official_ali_url(
             self.org_id, self.namespace_path, source.repository_name
         )
         current_ali_url = str(plugin.get("ali_url", "")).strip().rstrip("/")
-        if current_ali_url and current_ali_url != expected_ali_url:
-            if not repair_invalid_ali_url:
-                raise SyncError(
-                    f"Unexpected ali_url for {source.repository_name}: {current_ali_url}"
-                )
-            print(
-                f"Repairing ali_url for {source.repository_name}: "
-                f"{current_ali_url} -> {expected_ali_url}"
-            )
 
         description = str(plugin.get("description", "")).strip()
         github_url = str(plugin.get("github_url", "")).strip()
@@ -419,13 +455,31 @@ class PluginMirror:
         )
         with tempfile.TemporaryDirectory(prefix="zhenxun-plugin-") as temporary:
             repository = Path(temporary) / "repository"
-            clone_command = ["git", "clone", "--single-branch"]
+            clone_command = ["git", "clone", "--single-branch", "--no-checkout"]
             if source.branch:
                 clone_command.extend(["--branch", source.branch])
             clone_command.extend([source.clone_url, str(repository)])
             _run(clone_command)
 
             source_commit = _run(["git", "rev-parse", "HEAD"], cwd=repository)
+            if repository_uses_git_lfs(repository):
+                raise SyncSkipped(
+                    f"{source.repository_name} uses Git LFS and is excluded from "
+                    "Aliyun synchronization"
+                )
+
+            _run(["git", "checkout", "--force", "HEAD"], cwd=repository)
+            if current_ali_url and current_ali_url != expected_ali_url:
+                if not repair_invalid_ali_url:
+                    raise SyncError(
+                        f"Unexpected ali_url for {source.repository_name}: "
+                        f"{current_ali_url}"
+                    )
+                print(
+                    f"Repairing ali_url for {source.repository_name}: "
+                    f"{current_ali_url} -> {expected_ali_url}"
+                )
+
             version, version_source = extract_version(repository, plugin, source_commit)
 
             self.client.ensure_repository(
